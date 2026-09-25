@@ -1,0 +1,988 @@
+{
+  "incidents": [
+    {
+      "id": "4459e169",
+      "status": "resolved",
+      "raw_signal": {
+        "service": "checkout-api",
+        "metric": "p99_latency_ms",
+        "value": 4200,
+        "baseline": 180,
+        "trace_snippet": "TimeoutError: connection pool exhausted (db_pool size=10)"
+      },
+      "forecast": {
+        "time_to_breach_min": 0,
+        "trend": "rising",
+        "urgency": "critical",
+        "reasoning": "Linear trend projects breach of critical threshold (3780.0) in ~0 min at current rate (slope=375.833/sample). Urgency: critical."
+      },
+      "diagnosis": {
+        "root_cause": "db_connection_pool_exhaustion",
+        "fix_hint": "increase_pool_size_and_add_circuit_breaker",
+        "confidence": 0.82,
+        "retrieved_runbooks": [
+          "db_pool_exhaustion"
+        ],
+        "reasoning": "Trace snippet matches known pattern 'db_connection_pool_exhaustion'. Retrieved 1 related runbook(s): ['db_pool_exhaustion']. Recommending fix strategy: increase_pool_size_and_add_circuit_breaker.",
+        "engine": "heuristic"
+      },
+      "patch": {
+        "fix_hint": "increase_pool_size_and_add_circuit_breaker",
+        "attempt": 2,
+        "file": "services/checkout/db_client.py",
+        "diff": "+ from resilience import CircuitBreaker\n+ breaker = CircuitBreaker(fail_max=5, reset_timeout=30)\n+ @breaker\n  def get_connection(self):\n      return self.pool.acquire()",
+        "reasoning": "Applying tier-2 fix for 'increase_pool_size_and_add_circuit_breaker' (escalated after prior failure) targeting services/checkout/db_client.py."
+      },
+      "security_review": {
+        "passed": true,
+        "findings": [],
+        "reasoning": "No risky patterns detected in generated diff \u2014 cleared for sandbox testing."
+      },
+      "verification": {
+        "passed": true,
+        "sandbox_metric_after_fix": 190,
+        "tests_run": [
+          "load_replay_5min",
+          "unit_suite",
+          "canary_smoke"
+        ],
+        "reasoning": "Replayed 5 min of recorded traffic against patched sandbox. Post-fix p99 latency: 190ms. Within baseline tolerance \u2014 patch verified."
+      },
+      "deployment": {
+        "file": "services/checkout/db_client.py",
+        "steps": [
+          "opened_pr",
+          "ci_passed",
+          "canary_5pct_traffic",
+          "canary_metrics_healthy",
+          "full_rollout"
+        ],
+        "rollback_armed": true,
+        "deployed_at": 1790335281.1019247,
+        "reasoning": "Patch to services/checkout/db_client.py passed CI, canaried at 5% traffic with healthy metrics, then promoted to full rollout. Rollback trigger remains armed for 15 min post-deploy."
+      },
+      "impact": {
+        "auto_resolution_min": 0.3,
+        "baseline_human_resolution_min": 47,
+        "minutes_saved": 46.7,
+        "est_revenue_protected_usd": 196140.0
+      },
+      "audit_log": [
+        {
+          "ts": 1790335281.1005769,
+          "agent": "watchtower",
+          "action": "detect",
+          "reasoning": "Metric 'p99_latency_ms' on checkout-api reached 4200 vs baseline 180 \u2014 exceeds anomaly threshold. Flagging for diagnosis.",
+          "data": {
+            "service": "checkout-api",
+            "metric": "p99_latency_ms",
+            "value": 4200,
+            "baseline": 180,
+            "trace_snippet": "TimeoutError: connection pool exhausted (db_pool size=10)"
+          },
+          "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+          "hash": "da63893b5ae0a64b52e05b3bd39a9f5b555badba0ed7e2d7829c4297657c5458"
+        },
+        {
+          "ts": 1790335281.1010828,
+          "agent": "predictor",
+          "action": "forecast",
+          "reasoning": "Linear trend projects breach of critical threshold (3780.0) in ~0 min at current rate (slope=375.833/sample). Urgency: critical.",
+          "data": {
+            "time_to_breach_min": 0,
+            "trend": "rising",
+            "urgency": "critical",
+            "reasoning": "Linear trend projects breach of critical threshold (3780.0) in ~0 min at current rate (slope=375.833/sample). Urgency: critical."
+          },
+          "prev_hash": "da63893b5ae0a64b52e05b3bd39a9f5b555badba0ed7e2d7829c4297657c5458",
+          "hash": "0a4f06aef64b08b40cd337f980b7824cf5453515eab542fa010cfd1cbebd0bd1"
+        },
+        {
+          "ts": 1790335281.1011412,
+          "agent": "diagnosis",
+          "action": "classify",
+          "reasoning": "Trace snippet matches known pattern 'db_connection_pool_exhaustion'. Retrieved 1 related runbook(s): ['db_pool_exhaustion']. Recommending fix strategy: increase_pool_size_and_add_circuit_breaker.",
+          "data": {
+            "root_cause": "db_connection_pool_exhaustion",
+            "fix_hint": "increase_pool_size_and_add_circuit_breaker",
+            "confidence": 0.82,
+            "retrieved_runbooks": [
+              "db_pool_exhaustion"
+            ],
+            "reasoning": "Trace snippet matches known pattern 'db_connection_pool_exhaustion'. Retrieved 1 related runbook(s): ['db_pool_exhaustion']. Recommending fix strategy: increase_pool_size_and_add_circuit_breaker.",
+            "engine": "heuristic"
+          },
+          "prev_hash": "0a4f06aef64b08b40cd337f980b7824cf5453515eab542fa010cfd1cbebd0bd1",
+          "hash": "5d58781ad2f06cf1a97f8719740bf066ab2318166e7a8294184629d3654ef194"
+        },
+        {
+          "ts": 1790335281.1011639,
+          "agent": "patch",
+          "action": "generate",
+          "reasoning": "Applying tier-1 fix for 'increase_pool_size_and_add_circuit_breaker' (initial attempt) targeting config/db.yaml.",
+          "data": {
+            "attempt": 1,
+            "diff": "- pool_size: 10\n+ pool_size: 40\n+ acquire_timeout_ms: 2000"
+          },
+          "prev_hash": "5d58781ad2f06cf1a97f8719740bf066ab2318166e7a8294184629d3654ef194",
+          "hash": "02b4d337fec502fd06cfdf432450e3860df51cf47b8b9e504e393d20704fc829"
+        },
+        {
+          "ts": 1790335281.1018355,
+          "agent": "security_auditor",
+          "action": "scan_diff",
+          "reasoning": "No risky patterns detected in generated diff \u2014 cleared for sandbox testing.",
+          "data": {
+            "passed": true,
+            "findings": [],
+            "reasoning": "No risky patterns detected in generated diff \u2014 cleared for sandbox testing."
+          },
+          "prev_hash": "02b4d337fec502fd06cfdf432450e3860df51cf47b8b9e504e393d20704fc829",
+          "hash": "585cd42e2b160d58114b3babde1dd7273b7c8c9f87854bcaae35d6071ae92599"
+        },
+        {
+          "ts": 1790335281.1018643,
+          "agent": "verifier",
+          "action": "sandbox_test",
+          "reasoning": "Replayed 5 min of recorded traffic against patched sandbox. Post-fix p99 latency: 1837ms. Still above baseline \u2014 patch insufficient, requesting escalation.",
+          "data": {
+            "passed": false,
+            "sandbox_metric_after_fix": 1837,
+            "tests_run": [
+              "load_replay_5min",
+              "unit_suite",
+              "canary_smoke"
+            ],
+            "reasoning": "Replayed 5 min of recorded traffic against patched sandbox. Post-fix p99 latency: 1837ms. Still above baseline \u2014 patch insufficient, requesting escalation."
+          },
+          "prev_hash": "585cd42e2b160d58114b3babde1dd7273b7c8c9f87854bcaae35d6071ae92599",
+          "hash": "032033f24f9c481b0aad0ab7cdd0725945cc67070dfd185b3a397d02f8846364"
+        },
+        {
+          "ts": 1790335281.1018748,
+          "agent": "verifier",
+          "action": "reject",
+          "reasoning": "Attempt 1 failed sandbox checks, retrying with new hypothesis",
+          "data": {},
+          "prev_hash": "032033f24f9c481b0aad0ab7cdd0725945cc67070dfd185b3a397d02f8846364",
+          "hash": "99de6eadaba0f6c535192841ee34d56be52647606dfee6b3c72426b4955f3e9b"
+        },
+        {
+          "ts": 1790335281.101885,
+          "agent": "patch",
+          "action": "generate",
+          "reasoning": "Applying tier-2 fix for 'increase_pool_size_and_add_circuit_breaker' (escalated after prior failure) targeting services/checkout/db_client.py.",
+          "data": {
+            "attempt": 2,
+            "diff": "+ from resilience import CircuitBreaker\n+ breaker = CircuitBreaker(fail_max=5, reset_timeout=30)\n+ @breaker\n  def get_connection(self):\n      return self.pool.acquire()"
+          },
+          "prev_hash": "99de6eadaba0f6c535192841ee34d56be52647606dfee6b3c72426b4955f3e9b",
+          "hash": "9e7d5d3000e31b4954cc06020293025f26df459baf03c0129a35ea1ec18fae04"
+        },
+        {
+          "ts": 1790335281.1019094,
+          "agent": "security_auditor",
+          "action": "scan_diff",
+          "reasoning": "No risky patterns detected in generated diff \u2014 cleared for sandbox testing.",
+          "data": {
+            "passed": true,
+            "findings": [],
+            "reasoning": "No risky patterns detected in generated diff \u2014 cleared for sandbox testing."
+          },
+          "prev_hash": "9e7d5d3000e31b4954cc06020293025f26df459baf03c0129a35ea1ec18fae04",
+          "hash": "23012492570fc8ae445a5e9fbfe2cf6d1b8a2f044ea768625d40ec6c56b67d62"
+        },
+        {
+          "ts": 1790335281.101918,
+          "agent": "verifier",
+          "action": "sandbox_test",
+          "reasoning": "Replayed 5 min of recorded traffic against patched sandbox. Post-fix p99 latency: 190ms. Within baseline tolerance \u2014 patch verified.",
+          "data": {
+            "passed": true,
+            "sandbox_metric_after_fix": 190,
+            "tests_run": [
+              "load_replay_5min",
+              "unit_suite",
+              "canary_smoke"
+            ],
+            "reasoning": "Replayed 5 min of recorded traffic against patched sandbox. Post-fix p99 latency: 190ms. Within baseline tolerance \u2014 patch verified."
+          },
+          "prev_hash": "23012492570fc8ae445a5e9fbfe2cf6d1b8a2f044ea768625d40ec6c56b67d62",
+          "hash": "142a2ca3ea5fd270b0498a3e7e5c54a5b9a016cf3dc21a80515e209eb04bc753"
+        },
+        {
+          "ts": 1790335281.1019258,
+          "agent": "deploy",
+          "action": "rollout",
+          "reasoning": "Patch to services/checkout/db_client.py passed CI, canaried at 5% traffic with healthy metrics, then promoted to full rollout. Rollback trigger remains armed for 15 min post-deploy.",
+          "data": {
+            "file": "services/checkout/db_client.py",
+            "steps": [
+              "opened_pr",
+              "ci_passed",
+              "canary_5pct_traffic",
+              "canary_metrics_healthy",
+              "full_rollout"
+            ],
+            "rollback_armed": true,
+            "deployed_at": 1790335281.1019247,
+            "reasoning": "Patch to services/checkout/db_client.py passed CI, canaried at 5% traffic with healthy metrics, then promoted to full rollout. Rollback trigger remains armed for 15 min post-deploy."
+          },
+          "prev_hash": "142a2ca3ea5fd270b0498a3e7e5c54a5b9a016cf3dc21a80515e209eb04bc753",
+          "hash": "ef0e5dd44bc8c926ef5471342b27a09c21581044da8e5d6ca8514466cbd020bc"
+        },
+        {
+          "ts": 1790335281.1019328,
+          "agent": "orchestrator",
+          "action": "resolve",
+          "reasoning": "Metrics confirmed recovered post-deploy; incident closed autonomously",
+          "data": {},
+          "prev_hash": "ef0e5dd44bc8c926ef5471342b27a09c21581044da8e5d6ca8514466cbd020bc",
+          "hash": "bd4b119f073a5f6819cc717ce377ab8ad602298130abdc4c9eb5671a5c180d90"
+        }
+      ],
+      "chain_verification": {
+        "valid": true,
+        "broken_at_index": null,
+        "final_hash": "bd4b119f073a5f6819cc717ce377ab8ad602298130abdc4c9eb5671a5c180d90"
+      },
+      "metric_history": [
+        180,
+        190,
+        210,
+        260,
+        340,
+        520,
+        900,
+        1800,
+        4200
+      ]
+    },
+    {
+      "id": "c0384456",
+      "status": "resolved",
+      "raw_signal": {
+        "service": "recommendation-engine",
+        "metric": "heap_used_mb",
+        "value": 1850,
+        "baseline": 400,
+        "trace_snippet": "gradual heap growth, suspected unbounded in-memory cache"
+      },
+      "forecast": {
+        "time_to_breach_min": 0,
+        "trend": "rising",
+        "urgency": "critical",
+        "reasoning": "Linear trend projects breach of critical threshold (1665.0) in ~0 min at current rate (slope=166.833/sample). Urgency: critical."
+      },
+      "diagnosis": {
+        "root_cause": "memory_leak_unbounded_cache",
+        "fix_hint": "add_cache_eviction_ttl",
+        "confidence": 0.82,
+        "retrieved_runbooks": [
+          "memory_leak"
+        ],
+        "reasoning": "Trace snippet matches known pattern 'memory_leak_unbounded_cache'. Retrieved 1 related runbook(s): ['memory_leak']. Recommending fix strategy: add_cache_eviction_ttl.",
+        "engine": "heuristic"
+      },
+      "patch": {
+        "fix_hint": "add_cache_eviction_ttl",
+        "attempt": 2,
+        "file": "services/cache/lru.py",
+        "diff": "- cache = {}\n+ cache = TTLCache(maxsize=5000, ttl=300)",
+        "reasoning": "Applying tier-1 fix for 'add_cache_eviction_ttl' (escalated after prior failure) targeting services/cache/lru.py."
+      },
+      "security_review": {
+        "passed": true,
+        "findings": [],
+        "reasoning": "No risky patterns detected in generated diff \u2014 cleared for sandbox testing."
+      },
+      "verification": {
+        "passed": true,
+        "sandbox_metric_after_fix": 190,
+        "tests_run": [
+          "load_replay_5min",
+          "unit_suite",
+          "canary_smoke"
+        ],
+        "reasoning": "Replayed 5 min of recorded traffic against patched sandbox. Post-fix p99 latency: 190ms. Within baseline tolerance \u2014 patch verified."
+      },
+      "deployment": {
+        "file": "services/cache/lru.py",
+        "steps": [
+          "opened_pr",
+          "ci_passed",
+          "canary_5pct_traffic",
+          "canary_metrics_healthy",
+          "full_rollout"
+        ],
+        "rollback_armed": true,
+        "deployed_at": 1790335281.1026266,
+        "reasoning": "Patch to services/cache/lru.py passed CI, canaried at 5% traffic with healthy metrics, then promoted to full rollout. Rollback trigger remains armed for 15 min post-deploy."
+      },
+      "impact": {
+        "auto_resolution_min": 0.3,
+        "baseline_human_resolution_min": 47,
+        "minutes_saved": 46.7,
+        "est_revenue_protected_usd": 42030.0
+      },
+      "audit_log": [
+        {
+          "ts": 1790335281.1023474,
+          "agent": "watchtower",
+          "action": "detect",
+          "reasoning": "Metric 'heap_used_mb' on recommendation-engine reached 1850 vs baseline 400 \u2014 exceeds anomaly threshold. Flagging for diagnosis.",
+          "data": {
+            "service": "recommendation-engine",
+            "metric": "heap_used_mb",
+            "value": 1850,
+            "baseline": 400,
+            "trace_snippet": "gradual heap growth, suspected unbounded in-memory cache"
+          },
+          "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+          "hash": "3848b19d7a2ae0ea8627864fef5d8b8b3ec82a99d0622e44450329fe6b537bee"
+        },
+        {
+          "ts": 1790335281.1025093,
+          "agent": "predictor",
+          "action": "forecast",
+          "reasoning": "Linear trend projects breach of critical threshold (1665.0) in ~0 min at current rate (slope=166.833/sample). Urgency: critical.",
+          "data": {
+            "time_to_breach_min": 0,
+            "trend": "rising",
+            "urgency": "critical",
+            "reasoning": "Linear trend projects breach of critical threshold (1665.0) in ~0 min at current rate (slope=166.833/sample). Urgency: critical."
+          },
+          "prev_hash": "3848b19d7a2ae0ea8627864fef5d8b8b3ec82a99d0622e44450329fe6b537bee",
+          "hash": "ad30e6ffa6b4369687e5ac3fe213a0d500be722a05610484ee59bd03f39c80c2"
+        },
+        {
+          "ts": 1790335281.1025515,
+          "agent": "diagnosis",
+          "action": "classify",
+          "reasoning": "Trace snippet matches known pattern 'memory_leak_unbounded_cache'. Retrieved 1 related runbook(s): ['memory_leak']. Recommending fix strategy: add_cache_eviction_ttl.",
+          "data": {
+            "root_cause": "memory_leak_unbounded_cache",
+            "fix_hint": "add_cache_eviction_ttl",
+            "confidence": 0.82,
+            "retrieved_runbooks": [
+              "memory_leak"
+            ],
+            "reasoning": "Trace snippet matches known pattern 'memory_leak_unbounded_cache'. Retrieved 1 related runbook(s): ['memory_leak']. Recommending fix strategy: add_cache_eviction_ttl.",
+            "engine": "heuristic"
+          },
+          "prev_hash": "ad30e6ffa6b4369687e5ac3fe213a0d500be722a05610484ee59bd03f39c80c2",
+          "hash": "2530ca34255c4237e279ab31bd73ab4e3f8f8785adcf80acea50503f751de3dd"
+        },
+        {
+          "ts": 1790335281.102564,
+          "agent": "patch",
+          "action": "generate",
+          "reasoning": "Applying tier-1 fix for 'add_cache_eviction_ttl' (initial attempt) targeting services/cache/lru.py.",
+          "data": {
+            "attempt": 1,
+            "diff": "- cache = {}\n+ cache = TTLCache(maxsize=5000, ttl=300)"
+          },
+          "prev_hash": "2530ca34255c4237e279ab31bd73ab4e3f8f8785adcf80acea50503f751de3dd",
+          "hash": "0b134ba95473bcdb04721998f65e84db2dbc5aa098cddd6133d1cdeefaf6621c"
+        },
+        {
+          "ts": 1790335281.102579,
+          "agent": "security_auditor",
+          "action": "scan_diff",
+          "reasoning": "No risky patterns detected in generated diff \u2014 cleared for sandbox testing.",
+          "data": {
+            "passed": true,
+            "findings": [],
+            "reasoning": "No risky patterns detected in generated diff \u2014 cleared for sandbox testing."
+          },
+          "prev_hash": "0b134ba95473bcdb04721998f65e84db2dbc5aa098cddd6133d1cdeefaf6621c",
+          "hash": "4f77ea06cb16da7be73b6379f1da1ca7918bd9732c047b984673011bbe9780e7"
+        },
+        {
+          "ts": 1790335281.1025913,
+          "agent": "verifier",
+          "action": "sandbox_test",
+          "reasoning": "Replayed 5 min of recorded traffic against patched sandbox. Post-fix p99 latency: 2164ms. Still above baseline \u2014 patch insufficient, requesting escalation.",
+          "data": {
+            "passed": false,
+            "sandbox_metric_after_fix": 2164,
+            "tests_run": [
+              "load_replay_5min",
+              "unit_suite",
+              "canary_smoke"
+            ],
+            "reasoning": "Replayed 5 min of recorded traffic against patched sandbox. Post-fix p99 latency: 2164ms. Still above baseline \u2014 patch insufficient, requesting escalation."
+          },
+          "prev_hash": "4f77ea06cb16da7be73b6379f1da1ca7918bd9732c047b984673011bbe9780e7",
+          "hash": "276c97a3e7b3b7ac82edeae9c90330fa07dfed14fbe3ec4054aecef1e8710b1d"
+        },
+        {
+          "ts": 1790335281.1025977,
+          "agent": "verifier",
+          "action": "reject",
+          "reasoning": "Attempt 1 failed sandbox checks, retrying with new hypothesis",
+          "data": {},
+          "prev_hash": "276c97a3e7b3b7ac82edeae9c90330fa07dfed14fbe3ec4054aecef1e8710b1d",
+          "hash": "541aa7e3816bd4c28c030019a0cbdda7696207d24baee087e4b2e39fccd42e63"
+        },
+        {
+          "ts": 1790335281.1026032,
+          "agent": "patch",
+          "action": "generate",
+          "reasoning": "Applying tier-1 fix for 'add_cache_eviction_ttl' (escalated after prior failure) targeting services/cache/lru.py.",
+          "data": {
+            "attempt": 2,
+            "diff": "- cache = {}\n+ cache = TTLCache(maxsize=5000, ttl=300)"
+          },
+          "prev_hash": "541aa7e3816bd4c28c030019a0cbdda7696207d24baee087e4b2e39fccd42e63",
+          "hash": "dd1d42f27f5a091733045bd014c4085fe5d0d4044f7c23f5d7a9dbd049418674"
+        },
+        {
+          "ts": 1790335281.1026146,
+          "agent": "security_auditor",
+          "action": "scan_diff",
+          "reasoning": "No risky patterns detected in generated diff \u2014 cleared for sandbox testing.",
+          "data": {
+            "passed": true,
+            "findings": [],
+            "reasoning": "No risky patterns detected in generated diff \u2014 cleared for sandbox testing."
+          },
+          "prev_hash": "dd1d42f27f5a091733045bd014c4085fe5d0d4044f7c23f5d7a9dbd049418674",
+          "hash": "234ade8cca9514705d25d90f5a3d27ede8792974404fbff5c7677b63ace2470c"
+        },
+        {
+          "ts": 1790335281.1026206,
+          "agent": "verifier",
+          "action": "sandbox_test",
+          "reasoning": "Replayed 5 min of recorded traffic against patched sandbox. Post-fix p99 latency: 190ms. Within baseline tolerance \u2014 patch verified.",
+          "data": {
+            "passed": true,
+            "sandbox_metric_after_fix": 190,
+            "tests_run": [
+              "load_replay_5min",
+              "unit_suite",
+              "canary_smoke"
+            ],
+            "reasoning": "Replayed 5 min of recorded traffic against patched sandbox. Post-fix p99 latency: 190ms. Within baseline tolerance \u2014 patch verified."
+          },
+          "prev_hash": "234ade8cca9514705d25d90f5a3d27ede8792974404fbff5c7677b63ace2470c",
+          "hash": "ccb24fa8db5420ea30b41ca2a5ce0c3be43d24d6ea3a93c5570461b457d6a69b"
+        },
+        {
+          "ts": 1790335281.1026275,
+          "agent": "deploy",
+          "action": "rollout",
+          "reasoning": "Patch to services/cache/lru.py passed CI, canaried at 5% traffic with healthy metrics, then promoted to full rollout. Rollback trigger remains armed for 15 min post-deploy.",
+          "data": {
+            "file": "services/cache/lru.py",
+            "steps": [
+              "opened_pr",
+              "ci_passed",
+              "canary_5pct_traffic",
+              "canary_metrics_healthy",
+              "full_rollout"
+            ],
+            "rollback_armed": true,
+            "deployed_at": 1790335281.1026266,
+            "reasoning": "Patch to services/cache/lru.py passed CI, canaried at 5% traffic with healthy metrics, then promoted to full rollout. Rollback trigger remains armed for 15 min post-deploy."
+          },
+          "prev_hash": "ccb24fa8db5420ea30b41ca2a5ce0c3be43d24d6ea3a93c5570461b457d6a69b",
+          "hash": "2ecbd7db5dbf107741cb8dc07282a0693641e21184f2e217db4a41b98334265e"
+        },
+        {
+          "ts": 1790335281.1026335,
+          "agent": "orchestrator",
+          "action": "resolve",
+          "reasoning": "Metrics confirmed recovered post-deploy; incident closed autonomously",
+          "data": {},
+          "prev_hash": "2ecbd7db5dbf107741cb8dc07282a0693641e21184f2e217db4a41b98334265e",
+          "hash": "30d20249d437123888f593b516412062504654dd8ceb574e0e10942fd7de5e43"
+        }
+      ],
+      "chain_verification": {
+        "valid": true,
+        "broken_at_index": null,
+        "final_hash": "30d20249d437123888f593b516412062504654dd8ceb574e0e10942fd7de5e43"
+      },
+      "metric_history": [
+        400,
+        460,
+        540,
+        640,
+        760,
+        910,
+        1100,
+        1400,
+        1850
+      ]
+    },
+    {
+      "id": "f4953f04",
+      "status": "resolved",
+      "raw_signal": {
+        "service": "payments-gateway",
+        "metric": "p99_latency_ms",
+        "value": 3100,
+        "baseline": 220,
+        "trace_snippet": "upstream bank API timeout, no retry configured"
+      },
+      "forecast": {
+        "time_to_breach_min": 0,
+        "trend": "rising",
+        "urgency": "critical",
+        "reasoning": "Linear trend projects breach of critical threshold (2790.0) in ~0 min at current rate (slope=390.333/sample). Urgency: critical."
+      },
+      "diagnosis": {
+        "root_cause": "upstream_timeout_no_retry_budget",
+        "fix_hint": "add_exponential_backoff_retry",
+        "confidence": 0.82,
+        "retrieved_runbooks": [
+          "upstream_timeout",
+          "memory_leak"
+        ],
+        "reasoning": "Trace snippet matches known pattern 'upstream_timeout_no_retry_budget'. Retrieved 2 related runbook(s): ['upstream_timeout', 'memory_leak']. Recommending fix strategy: add_exponential_backoff_retry.",
+        "engine": "heuristic"
+      },
+      "patch": {
+        "fix_hint": "add_exponential_backoff_retry",
+        "attempt": 1,
+        "file": "services/http_client.py",
+        "diff": "+ @retry(wait=wait_exponential(min=1, max=10), stop=stop_after_attempt(4))\n  def call_upstream(self, req):\n      return self.session.post(req)",
+        "reasoning": "Applying tier-1 fix for 'add_exponential_backoff_retry' (initial attempt) targeting services/http_client.py."
+      },
+      "security_review": {
+        "passed": true,
+        "findings": [],
+        "reasoning": "No risky patterns detected in generated diff \u2014 cleared for sandbox testing."
+      },
+      "verification": {
+        "passed": true,
+        "sandbox_metric_after_fix": 190,
+        "tests_run": [
+          "load_replay_5min",
+          "unit_suite",
+          "canary_smoke"
+        ],
+        "reasoning": "Replayed 5 min of recorded traffic against patched sandbox. Post-fix p99 latency: 190ms. Within baseline tolerance \u2014 patch verified."
+      },
+      "deployment": {
+        "file": "services/http_client.py",
+        "steps": [
+          "opened_pr",
+          "ci_passed",
+          "canary_5pct_traffic",
+          "canary_metrics_healthy",
+          "full_rollout"
+        ],
+        "rollback_armed": true,
+        "deployed_at": 1790335281.1032178,
+        "reasoning": "Patch to services/http_client.py passed CI, canaried at 5% traffic with healthy metrics, then promoted to full rollout. Rollback trigger remains armed for 15 min post-deploy."
+      },
+      "impact": {
+        "auto_resolution_min": 0.3,
+        "baseline_human_resolution_min": 47,
+        "minutes_saved": 46.7,
+        "est_revenue_protected_usd": 270860.0
+      },
+      "audit_log": [
+        {
+          "ts": 1790335281.1030185,
+          "agent": "watchtower",
+          "action": "detect",
+          "reasoning": "Metric 'p99_latency_ms' on payments-gateway reached 3100 vs baseline 220 \u2014 exceeds anomaly threshold. Flagging for diagnosis.",
+          "data": {
+            "service": "payments-gateway",
+            "metric": "p99_latency_ms",
+            "value": 3100,
+            "baseline": 220,
+            "trace_snippet": "upstream bank API timeout, no retry configured"
+          },
+          "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+          "hash": "c6c36734a9def6bc4d839e2473bb55d2f64de780a7f71fb0ad013cb9ae917b37"
+        },
+        {
+          "ts": 1790335281.1031287,
+          "agent": "predictor",
+          "action": "forecast",
+          "reasoning": "Linear trend projects breach of critical threshold (2790.0) in ~0 min at current rate (slope=390.333/sample). Urgency: critical.",
+          "data": {
+            "time_to_breach_min": 0,
+            "trend": "rising",
+            "urgency": "critical",
+            "reasoning": "Linear trend projects breach of critical threshold (2790.0) in ~0 min at current rate (slope=390.333/sample). Urgency: critical."
+          },
+          "prev_hash": "c6c36734a9def6bc4d839e2473bb55d2f64de780a7f71fb0ad013cb9ae917b37",
+          "hash": "358e7e35efbfebcee2f97691c4d1b1505c65bc6bb1d966d2270a2c7820975165"
+        },
+        {
+          "ts": 1790335281.1031682,
+          "agent": "diagnosis",
+          "action": "classify",
+          "reasoning": "Trace snippet matches known pattern 'upstream_timeout_no_retry_budget'. Retrieved 2 related runbook(s): ['upstream_timeout', 'memory_leak']. Recommending fix strategy: add_exponential_backoff_retry.",
+          "data": {
+            "root_cause": "upstream_timeout_no_retry_budget",
+            "fix_hint": "add_exponential_backoff_retry",
+            "confidence": 0.82,
+            "retrieved_runbooks": [
+              "upstream_timeout",
+              "memory_leak"
+            ],
+            "reasoning": "Trace snippet matches known pattern 'upstream_timeout_no_retry_budget'. Retrieved 2 related runbook(s): ['upstream_timeout', 'memory_leak']. Recommending fix strategy: add_exponential_backoff_retry.",
+            "engine": "heuristic"
+          },
+          "prev_hash": "358e7e35efbfebcee2f97691c4d1b1505c65bc6bb1d966d2270a2c7820975165",
+          "hash": "c1500a6e2c3f6cfbc925596c67cb79dd5df8e38059e8626138ab106be7cca830"
+        },
+        {
+          "ts": 1790335281.1031806,
+          "agent": "patch",
+          "action": "generate",
+          "reasoning": "Applying tier-1 fix for 'add_exponential_backoff_retry' (initial attempt) targeting services/http_client.py.",
+          "data": {
+            "attempt": 1,
+            "diff": "+ @retry(wait=wait_exponential(min=1, max=10), stop=stop_after_attempt(4))\n  def call_upstream(self, req):\n      return self.session.post(req)"
+          },
+          "prev_hash": "c1500a6e2c3f6cfbc925596c67cb79dd5df8e38059e8626138ab106be7cca830",
+          "hash": "447aaf75375ef878b8f6275f5efcf5d212e40f256f92038836691faa69c82a39"
+        },
+        {
+          "ts": 1790335281.1032028,
+          "agent": "security_auditor",
+          "action": "scan_diff",
+          "reasoning": "No risky patterns detected in generated diff \u2014 cleared for sandbox testing.",
+          "data": {
+            "passed": true,
+            "findings": [],
+            "reasoning": "No risky patterns detected in generated diff \u2014 cleared for sandbox testing."
+          },
+          "prev_hash": "447aaf75375ef878b8f6275f5efcf5d212e40f256f92038836691faa69c82a39",
+          "hash": "71e1c22e383320e86b2c7c44cc4577f03431fb3731fde07efc0b38fe4a0bc6c2"
+        },
+        {
+          "ts": 1790335281.103211,
+          "agent": "verifier",
+          "action": "sandbox_test",
+          "reasoning": "Replayed 5 min of recorded traffic against patched sandbox. Post-fix p99 latency: 190ms. Within baseline tolerance \u2014 patch verified.",
+          "data": {
+            "passed": true,
+            "sandbox_metric_after_fix": 190,
+            "tests_run": [
+              "load_replay_5min",
+              "unit_suite",
+              "canary_smoke"
+            ],
+            "reasoning": "Replayed 5 min of recorded traffic against patched sandbox. Post-fix p99 latency: 190ms. Within baseline tolerance \u2014 patch verified."
+          },
+          "prev_hash": "71e1c22e383320e86b2c7c44cc4577f03431fb3731fde07efc0b38fe4a0bc6c2",
+          "hash": "c438ba8fccc988f973fa8f01e4fc9bca0828b8c2f3921dedfa7dbb7a1e8afb76"
+        },
+        {
+          "ts": 1790335281.103219,
+          "agent": "deploy",
+          "action": "rollout",
+          "reasoning": "Patch to services/http_client.py passed CI, canaried at 5% traffic with healthy metrics, then promoted to full rollout. Rollback trigger remains armed for 15 min post-deploy.",
+          "data": {
+            "file": "services/http_client.py",
+            "steps": [
+              "opened_pr",
+              "ci_passed",
+              "canary_5pct_traffic",
+              "canary_metrics_healthy",
+              "full_rollout"
+            ],
+            "rollback_armed": true,
+            "deployed_at": 1790335281.1032178,
+            "reasoning": "Patch to services/http_client.py passed CI, canaried at 5% traffic with healthy metrics, then promoted to full rollout. Rollback trigger remains armed for 15 min post-deploy."
+          },
+          "prev_hash": "c438ba8fccc988f973fa8f01e4fc9bca0828b8c2f3921dedfa7dbb7a1e8afb76",
+          "hash": "b1ab56de54066851e761a622e43e8173a05de799254135d4cecdd60e32f64739"
+        },
+        {
+          "ts": 1790335281.1032248,
+          "agent": "orchestrator",
+          "action": "resolve",
+          "reasoning": "Metrics confirmed recovered post-deploy; incident closed autonomously",
+          "data": {},
+          "prev_hash": "b1ab56de54066851e761a622e43e8173a05de799254135d4cecdd60e32f64739",
+          "hash": "06e7c11a54bdb954e54abdf545ea1c9baa7852574f3fa9ef90bef0bcd29bdbc1"
+        }
+      ],
+      "chain_verification": {
+        "valid": true,
+        "broken_at_index": null,
+        "final_hash": "06e7c11a54bdb954e54abdf545ea1c9baa7852574f3fa9ef90bef0bcd29bdbc1"
+      },
+      "metric_history": [
+        220,
+        230,
+        260,
+        290,
+        800,
+        1400,
+        2100,
+        2600,
+        3100
+      ]
+    },
+    {
+      "id": "6b51e1aa",
+      "status": "resolved",
+      "raw_signal": {
+        "service": "search-indexer",
+        "metric": "cpu_pct",
+        "value": 97,
+        "baseline": 35,
+        "trace_snippet": "unexplained oscillating CPU, no clear trace match"
+      },
+      "forecast": {
+        "time_to_breach_min": 0,
+        "trend": "rising",
+        "urgency": "critical",
+        "reasoning": "Linear trend projects breach of critical threshold (87.3) in ~0 min at current rate (slope=6.283/sample). Urgency: critical."
+      },
+      "diagnosis": {
+        "root_cause": "unclassified_latency_regression",
+        "fix_hint": "add_tracing_and_rollback_last_deploy",
+        "confidence": 0.82,
+        "retrieved_runbooks": [
+          "upstream_timeout",
+          "memory_leak"
+        ],
+        "reasoning": "Trace snippet matches known pattern 'unclassified_latency_regression'. Retrieved 2 related runbook(s): ['upstream_timeout', 'memory_leak']. Recommending fix strategy: add_tracing_and_rollback_last_deploy.",
+        "engine": "heuristic"
+      },
+      "patch": {
+        "fix_hint": "add_tracing_and_rollback_last_deploy",
+        "attempt": 2,
+        "file": "deploy/rollback.sh",
+        "diff": "+ kubectl rollout undo deployment/${SERVICE} --to-revision=$(($CURRENT-1))",
+        "reasoning": "Applying tier-1 fix for 'add_tracing_and_rollback_last_deploy' (escalated after prior failure) targeting deploy/rollback.sh."
+      },
+      "security_review": {
+        "passed": true,
+        "findings": [],
+        "reasoning": "No risky patterns detected in generated diff \u2014 cleared for sandbox testing."
+      },
+      "verification": {
+        "passed": true,
+        "sandbox_metric_after_fix": 190,
+        "tests_run": [
+          "load_replay_5min",
+          "unit_suite",
+          "canary_smoke"
+        ],
+        "reasoning": "Replayed 5 min of recorded traffic against patched sandbox. Post-fix p99 latency: 190ms. Within baseline tolerance \u2014 patch verified."
+      },
+      "deployment": {
+        "file": "deploy/rollback.sh",
+        "steps": [
+          "opened_pr",
+          "ci_passed",
+          "canary_5pct_traffic",
+          "canary_metrics_healthy",
+          "full_rollout"
+        ],
+        "rollback_armed": true,
+        "deployed_at": 1790335281.1037235,
+        "reasoning": "Patch to deploy/rollback.sh passed CI, canaried at 5% traffic with healthy metrics, then promoted to full rollout. Rollback trigger remains armed for 15 min post-deploy."
+      },
+      "impact": {
+        "auto_resolution_min": 0.3,
+        "baseline_human_resolution_min": 47,
+        "minutes_saved": 46.7,
+        "est_revenue_protected_usd": 51370.0
+      },
+      "audit_log": [
+        {
+          "ts": 1790335281.1034799,
+          "agent": "watchtower",
+          "action": "detect",
+          "reasoning": "Metric 'cpu_pct' on search-indexer reached 97 vs baseline 35 \u2014 exceeds anomaly threshold. Flagging for diagnosis.",
+          "data": {
+            "service": "search-indexer",
+            "metric": "cpu_pct",
+            "value": 97,
+            "baseline": 35,
+            "trace_snippet": "unexplained oscillating CPU, no clear trace match"
+          },
+          "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+          "hash": "3a920021135c2babd12cd8e4f106a07818285ee2e008ef0703a291cd64d9127f"
+        },
+        {
+          "ts": 1790335281.1035733,
+          "agent": "predictor",
+          "action": "forecast",
+          "reasoning": "Linear trend projects breach of critical threshold (87.3) in ~0 min at current rate (slope=6.283/sample). Urgency: critical.",
+          "data": {
+            "time_to_breach_min": 0,
+            "trend": "rising",
+            "urgency": "critical",
+            "reasoning": "Linear trend projects breach of critical threshold (87.3) in ~0 min at current rate (slope=6.283/sample). Urgency: critical."
+          },
+          "prev_hash": "3a920021135c2babd12cd8e4f106a07818285ee2e008ef0703a291cd64d9127f",
+          "hash": "7bebb53315808d39b819ed409129774597aa1d1b5f563a37811fe68d8e38c799"
+        },
+        {
+          "ts": 1790335281.1036055,
+          "agent": "diagnosis",
+          "action": "classify",
+          "reasoning": "Trace snippet matches known pattern 'unclassified_latency_regression'. Retrieved 2 related runbook(s): ['upstream_timeout', 'memory_leak']. Recommending fix strategy: add_tracing_and_rollback_last_deploy.",
+          "data": {
+            "root_cause": "unclassified_latency_regression",
+            "fix_hint": "add_tracing_and_rollback_last_deploy",
+            "confidence": 0.82,
+            "retrieved_runbooks": [
+              "upstream_timeout",
+              "memory_leak"
+            ],
+            "reasoning": "Trace snippet matches known pattern 'unclassified_latency_regression'. Retrieved 2 related runbook(s): ['upstream_timeout', 'memory_leak']. Recommending fix strategy: add_tracing_and_rollback_last_deploy.",
+            "engine": "heuristic"
+          },
+          "prev_hash": "7bebb53315808d39b819ed409129774597aa1d1b5f563a37811fe68d8e38c799",
+          "hash": "b4a05c9160d2a45c867a1c356fb319f55920dd641319ee2a7669ab2c542e8e64"
+        },
+        {
+          "ts": 1790335281.103617,
+          "agent": "patch",
+          "action": "generate",
+          "reasoning": "Applying tier-1 fix for 'add_tracing_and_rollback_last_deploy' (initial attempt) targeting deploy/rollback.sh.",
+          "data": {
+            "attempt": 1,
+            "diff": "+ kubectl rollout undo deployment/${SERVICE} --to-revision=$(($CURRENT-1))"
+          },
+          "prev_hash": "b4a05c9160d2a45c867a1c356fb319f55920dd641319ee2a7669ab2c542e8e64",
+          "hash": "824f909ab9024ed5831de59c6c1cddd0ed407d9bf9e97abcbef35b749159dc9a"
+        },
+        {
+          "ts": 1790335281.1036327,
+          "agent": "security_auditor",
+          "action": "scan_diff",
+          "reasoning": "No risky patterns detected in generated diff \u2014 cleared for sandbox testing.",
+          "data": {
+            "passed": true,
+            "findings": [],
+            "reasoning": "No risky patterns detected in generated diff \u2014 cleared for sandbox testing."
+          },
+          "prev_hash": "824f909ab9024ed5831de59c6c1cddd0ed407d9bf9e97abcbef35b749159dc9a",
+          "hash": "669817220811eb2d8354764141dac40c9b7f481cec23fedbcce93fbeddfa0d61"
+        },
+        {
+          "ts": 1790335281.1036422,
+          "agent": "verifier",
+          "action": "sandbox_test",
+          "reasoning": "Replayed 5 min of recorded traffic against patched sandbox. Post-fix p99 latency: 1773ms. Still above baseline \u2014 patch insufficient, requesting escalation.",
+          "data": {
+            "passed": false,
+            "sandbox_metric_after_fix": 1773,
+            "tests_run": [
+              "load_replay_5min",
+              "unit_suite",
+              "canary_smoke"
+            ],
+            "reasoning": "Replayed 5 min of recorded traffic against patched sandbox. Post-fix p99 latency: 1773ms. Still above baseline \u2014 patch insufficient, requesting escalation."
+          },
+          "prev_hash": "669817220811eb2d8354764141dac40c9b7f481cec23fedbcce93fbeddfa0d61",
+          "hash": "aee7b7a4287a0560786cf170b47c9dd8d4ea8168fd4e28d0c8f2f79a18e0a2e6"
+        },
+        {
+          "ts": 1790335281.1036754,
+          "agent": "verifier",
+          "action": "reject",
+          "reasoning": "Attempt 1 failed sandbox checks, retrying with new hypothesis",
+          "data": {},
+          "prev_hash": "aee7b7a4287a0560786cf170b47c9dd8d4ea8168fd4e28d0c8f2f79a18e0a2e6",
+          "hash": "10cbcc640d82ca02b5fccb48782e5286f6c2c6e64a584746d7736bcf65b9402c"
+        },
+        {
+          "ts": 1790335281.1036856,
+          "agent": "patch",
+          "action": "generate",
+          "reasoning": "Applying tier-1 fix for 'add_tracing_and_rollback_last_deploy' (escalated after prior failure) targeting deploy/rollback.sh.",
+          "data": {
+            "attempt": 2,
+            "diff": "+ kubectl rollout undo deployment/${SERVICE} --to-revision=$(($CURRENT-1))"
+          },
+          "prev_hash": "10cbcc640d82ca02b5fccb48782e5286f6c2c6e64a584746d7736bcf65b9402c",
+          "hash": "04a461264ff1b7c4d0cb408b0c6ea42222fe8eadc7972c739d6f0169b92befcc"
+        },
+        {
+          "ts": 1790335281.1037023,
+          "agent": "security_auditor",
+          "action": "scan_diff",
+          "reasoning": "No risky patterns detected in generated diff \u2014 cleared for sandbox testing.",
+          "data": {
+            "passed": true,
+            "findings": [],
+            "reasoning": "No risky patterns detected in generated diff \u2014 cleared for sandbox testing."
+          },
+          "prev_hash": "04a461264ff1b7c4d0cb408b0c6ea42222fe8eadc7972c739d6f0169b92befcc",
+          "hash": "e6ea0a2305beb0ac1d429f0d9c0139cb8c66cccab5bfd2e0003c99bc75fe70af"
+        },
+        {
+          "ts": 1790335281.1037166,
+          "agent": "verifier",
+          "action": "sandbox_test",
+          "reasoning": "Replayed 5 min of recorded traffic against patched sandbox. Post-fix p99 latency: 190ms. Within baseline tolerance \u2014 patch verified.",
+          "data": {
+            "passed": true,
+            "sandbox_metric_after_fix": 190,
+            "tests_run": [
+              "load_replay_5min",
+              "unit_suite",
+              "canary_smoke"
+            ],
+            "reasoning": "Replayed 5 min of recorded traffic against patched sandbox. Post-fix p99 latency: 190ms. Within baseline tolerance \u2014 patch verified."
+          },
+          "prev_hash": "e6ea0a2305beb0ac1d429f0d9c0139cb8c66cccab5bfd2e0003c99bc75fe70af",
+          "hash": "8ebf2f61593eff531890a6ec0098aa86472d0da1dab26595fbded508c1a7b445"
+        },
+        {
+          "ts": 1790335281.1037245,
+          "agent": "deploy",
+          "action": "rollout",
+          "reasoning": "Patch to deploy/rollback.sh passed CI, canaried at 5% traffic with healthy metrics, then promoted to full rollout. Rollback trigger remains armed for 15 min post-deploy.",
+          "data": {
+            "file": "deploy/rollback.sh",
+            "steps": [
+              "opened_pr",
+              "ci_passed",
+              "canary_5pct_traffic",
+              "canary_metrics_healthy",
+              "full_rollout"
+            ],
+            "rollback_armed": true,
+            "deployed_at": 1790335281.1037235,
+            "reasoning": "Patch to deploy/rollback.sh passed CI, canaried at 5% traffic with healthy metrics, then promoted to full rollout. Rollback trigger remains armed for 15 min post-deploy."
+          },
+          "prev_hash": "8ebf2f61593eff531890a6ec0098aa86472d0da1dab26595fbded508c1a7b445",
+          "hash": "8b4fff48fde7c8048bc8942f09fe5cd58ae2da29bd0b2dcb5096fa09b63dc3d1"
+        },
+        {
+          "ts": 1790335281.1037343,
+          "agent": "orchestrator",
+          "action": "resolve",
+          "reasoning": "Metrics confirmed recovered post-deploy; incident closed autonomously",
+          "data": {},
+          "prev_hash": "8b4fff48fde7c8048bc8942f09fe5cd58ae2da29bd0b2dcb5096fa09b63dc3d1",
+          "hash": "5ba78016c54c0f5b039520975b7c14e2b0d9d6656517bb1e9fc5f4a91d9cae58"
+        }
+      ],
+      "chain_verification": {
+        "valid": true,
+        "broken_at_index": null,
+        "final_hash": "5ba78016c54c0f5b039520975b7c14e2b0d9d6656517bb1e9fc5f4a91d9cae58"
+      },
+      "metric_history": [
+        35,
+        60,
+        40,
+        75,
+        45,
+        88,
+        50,
+        92,
+        97
+      ]
+    }
+  ]
+}
