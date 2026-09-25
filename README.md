@@ -2,6 +2,16 @@
 
 **Live demo (GitHub Pages):** `https://nikhil-creat.github.io/zenith/`
 
+## Designed and Developed by 
+# **NIKHIL CHARY SRIRAMOJU**
+BTech CSE (Final Year)
+
+- GitHub: [Nikhil-creat](https://github.com/Nikhil-creat)
+- LinkedIn: [nikhil-chary-sriramoju](https://in.linkedin.com/in/nikhil-chary-sriramoju-95041b38a)
+- Email: sriramojunikhil66@gmail.com
+- Instagram: [@nikhil__sriramoju](https://www.instagram.com/nikhil__sriramoju)
+- Facebook: [Profile](https://www.facebook.com/profile.php?id=100079201124141)
+
 ZENITH is a multi-agent system that watches a production service, detects an incident, diagnoses the root cause, writes a code/config fix, tests it in a sandbox, and deploys it — **with no human in the loop**. When it can't fix something safely after retries, it escalates instead of guessing forever.
 
 Most "agentic AI" portfolio projects generate content (chat, RAG answers, images). ZENITH takes autonomous *action* on live infrastructure — perceive, diagnose, patch, verify, deploy — which is the operational-autonomy skillset behind real AIOps/SRE-copilot systems (e.g. what teams at Datadog, PagerDuty, and internal platform teams at big tech are actively building toward).
